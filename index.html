@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>PDF Combiner</title>
+</head>
+<body>
+  <input type="file" id="files" multiple accept="application/pdf" />
+  <button id="merge">Merge PDFs</button>
+  <a id="download" style="display:none">Download</a>
+
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script>
+    document.getElementById('merge').addEventListener('click', async () => {
+      const files = document.getElementById('files').files;
+      if (files.length < 2) { alert("Select 2+ PDFs"); return; }
+
+      const mergedPdf = await PDFLib.PDFDocument.create();
+
+      for (const file of files) {
+        const bytes = await file.arrayBuffer();
+        const pdf = await PDFLib.PDFDocument.load(bytes);
+        const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+        copiedPages.forEach(p => mergedPdf.addPage(p));
+      }
+
+      const pdfBytes = await mergedPdf.save();
+      const blob = new Blob([pdfBytes], {type:"application/pdf"});
+      const url = URL.createObjectURL(blob);
+
+      const a = document.getElementById('download');
+      a.style.display = "block";
+      a.href = url;
+      a.download = "merged.pdf";
+      a.textContent = "Download merged.pdf";
+    });
+  </script>
+</body>
+</html>
